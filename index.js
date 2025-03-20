@@ -72,14 +72,13 @@ function collectUserPreference(agent) {
     }
 
     let key = selectedQuestions[step].key;
-
-    // ✅ 直接读取 `Dialogflow parameters`
     let userResponse = agent.parameters[key] || agent.query.trim();
     answers[key] = userResponse;
 
     console.log(`📝 Stored: ${key} -> ${answers[key]}`);
 
     if (step < 2) {
+        // 🎯 继续提问下一个问题
         agent.context.set({
             name: "book_recommendation_session",
             lifespan: 5,
@@ -87,12 +86,19 @@ function collectUserPreference(agent) {
         });
         agent.add(selectedQuestions[step + 1].text);
     } else {
+        // 🎯 **三轮问题结束后，先输出感谢信息**
+        agent.add("Thanks! Based on your preferences, let me find a book for you.");
+        
+        // 🎯 **设置 context 以触发 OpenAI 推荐**
         agent.context.set({
             name: "book_recommendation_session",
             lifespan: 5,
             parameters: { answers }
         });
-        agent.add("Thanks! Based on your preferences, let me find a book for you.");
+
+        console.log("✅ All preferences collected, calling OpenAI API...");
+        
+        return generateRecommendation(agent); // **调用 OpenAI 生成推荐**
     }
 }
 
