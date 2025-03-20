@@ -65,31 +65,32 @@ function collectUserPreference(agent) {
     let answers = context.parameters.answers || {};
     let selectedQuestions = context.parameters.selectedQuestions || [];
     let step = context.parameters.step || 0;
-    
+
     if (selectedQuestions.length === 0) {
         agent.add("Sorry, something went wrong. Please restart the book recommendation.");
         return;
     }
 
-    let key = selectedQuestions[step].key;  // 取当前的问题 key
-    answers[key] = agent.query;  // 存储用户回答
+    let key = selectedQuestions[step].key;
 
-    console.log(`📝 Stored: ${key} -> ${agent.query}`);
+    // ✅ 直接读取 `Dialogflow parameters`
+    let userResponse = agent.parameters[key] || agent.query.trim();
+    answers[key] = userResponse;
 
-    // 🎯 继续提问 or 进入推荐阶段
+    console.log(`📝 Stored: ${key} -> ${answers[key]}`);
+
     if (step < 2) {
         agent.context.set({
             name: "book_recommendation_session",
             lifespan: 5,
-            parameters: { selectedQuestions: selectedQuestions, step: step + 1, answers: answers }
+            parameters: { selectedQuestions, step: step + 1, answers }
         });
-        agent.add(selectedQuestions[step + 1].text);  // 提问下一个问题
+        agent.add(selectedQuestions[step + 1].text);
     } else {
-        // 🎯 进入最终推荐阶段
         agent.context.set({
             name: "book_recommendation_session",
             lifespan: 5,
-            parameters: { answers: answers }
+            parameters: { answers }
         });
         agent.add("Thanks! Based on your preferences, let me find a book for you.");
     }
