@@ -26,7 +26,7 @@ const questions = [
  * - 触发后，随机选取 3 个问题进行询问
  * - 存入 `book_recommendation_session`，保证多轮对话
  */
-async function startRecommendation(agent) {
+function startRecommendation(agent) {
     let selectedQuestions = [];
 
     // 🎯 随机选择 3 个不同的问题
@@ -55,7 +55,7 @@ async function startRecommendation(agent) {
  * - 记录用户偏好并存入 `book_recommendation_session`
  * - 如果 3 个问题收集完，触发 `GenerateRecommendationIntent`
  */
-async function collectUserPreference(agent) {
+function collectUserPreference(agent) {
     const context = agent.context.get("book_recommendation_session") || {
         name: "book_recommendation_session",
         lifespan: 5,
@@ -117,13 +117,13 @@ async function generateRecommendation(agent) {
     Provide a book title, author, and a short description.`;
 
     try {
-        let response = await openai.chat.completions.create({
+        let response = await openai.createCompletion({
             model: "gpt-4",
-            messages: [{ role: "user", content: prompt }],
+            prompt: prompt,
             max_tokens: 100
         });
 
-        let recommendation = response.choices[0].message.content.trim();
+        let recommendation = response.data.choices[0].text.trim();
         agent.add(`Based on your preferences, here is a book recommendation: ${recommendation}`);
     } catch (error) {
         console.error("OpenAI API Error:", error);
