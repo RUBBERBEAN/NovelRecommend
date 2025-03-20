@@ -131,17 +131,24 @@ async function generateRecommendation(agent) {
     Provide a book title, author, and a short description.`;
 
     try {
-        let response = await openai.createCompletion({
-            model: "gpt-4o",
-            prompt: prompt,
+        console.log("🚀 Calling OpenAI API...");
+        
+        const response = await openai.chat.completions.create({
+            model: "gpt-4",
+            messages: [{ role: "user", content: prompt }],
             max_tokens: 100
         });
 
-        let recommendation = response.data.choices[0].text.trim();
+        if (!response || !response.choices || response.choices.length === 0) {
+            throw new Error("OpenAI API returned empty response.");
+        }
+
+        let recommendation = response.choices[0].message.content.trim();
+        console.log("📖 Recommendation:", recommendation);
         agent.add(`Based on your preferences, here is a book recommendation: ${recommendation}`);
     } catch (error) {
-        console.error("OpenAI API Error:", error);
-        agent.add("Sorry, there was an issue fetching recommendations. Please try again.");
+        console.error("🚨 OpenAI API Error:", error);
+        agent.add("Sorry, I couldn't generate a recommendation due to a system error. Please try again later.");
     }
 }
 
