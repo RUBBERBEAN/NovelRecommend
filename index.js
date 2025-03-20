@@ -1,16 +1,15 @@
 const express = require("express");
 const { WebhookClient } = require("dialogflow-fulfillment");
-const { Configuration, OpenAIApi } = require("openai");
+const { OpenAI } = require("openai");
 
 // 🔥 Express 服务器
 const app = express();
 app.use(express.json());
 
-// 🔥 OpenAI API 配置
-const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY  // 🚨 在环境变量中设置 API Key
+// 🔥 OpenAI API 配置（Cloud Run 通过 --set-env-vars 传递 API Key）
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY  // ✅ 读取环境变量
 });
-const openai = new OpenAIApi(configuration);
 
 // 📌 书籍推荐相关问题
 const questions = [
@@ -118,13 +117,13 @@ async function generateRecommendation(agent) {
     Provide a book title, author, and a short description.`;
 
     try {
-        let response = await openai.createCompletion({
+        let response = await openai.chat.completions.create({
             model: "gpt-4",
-            prompt: prompt,
+            messages: [{ role: "user", content: prompt }],
             max_tokens: 100
         });
 
-        let recommendation = response.data.choices[0].text.trim();
+        let recommendation = response.choices[0].message.content.trim();
         agent.add(`Based on your preferences, here is a book recommendation: ${recommendation}`);
     } catch (error) {
         console.error("OpenAI API Error:", error);
