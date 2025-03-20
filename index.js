@@ -8,7 +8,7 @@ app.use(express.json());
 
 // 🔥 OpenAI API 配置（Cloud Run 通过 --set-env-vars 传递 API Key）
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY  // ✅ 读取环境变量
+    apiKey: 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  // ✅ 读取环境变量
 });
 
 // 📌 书籍推荐相关问题
