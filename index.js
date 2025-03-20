@@ -66,18 +66,24 @@ function collectUserPreference(agent) {
     let selectedQuestions = context.parameters.selectedQuestions || [];
     let step = context.parameters.step || 0;
     
-    let key = selectedQuestions[step].key;
-    answers[key] = agent.query; // 记录用户的回答
+    if (selectedQuestions.length === 0) {
+        agent.add("Sorry, something went wrong. Please restart the book recommendation.");
+        return;
+    }
 
-    // 🎯 如果还有问题要问
+    let key = selectedQuestions[step].key;  // 取当前的问题 key
+    answers[key] = agent.query;  // 存储用户回答
+
+    console.log(`📝 Stored: ${key} -> ${agent.query}`);
+
+    // 🎯 继续提问 or 进入推荐阶段
     if (step < 2) {
         agent.context.set({
             name: "book_recommendation_session",
             lifespan: 5,
             parameters: { selectedQuestions: selectedQuestions, step: step + 1, answers: answers }
         });
-
-        agent.add(selectedQuestions[step + 1].text);
+        agent.add(selectedQuestions[step + 1].text);  // 提问下一个问题
     } else {
         // 🎯 进入最终推荐阶段
         agent.context.set({
@@ -85,7 +91,6 @@ function collectUserPreference(agent) {
             lifespan: 5,
             parameters: { answers: answers }
         });
-
         agent.add("Thanks! Based on your preferences, let me find a book for you.");
     }
 }
@@ -95,17 +100,19 @@ function collectUserPreference(agent) {
  * - 读取 `book_recommendation_session`
  * - 通过 OpenAI 生成最佳书籍推荐
  */
+
 async function generateRecommendation(agent) {
     let context = agent.context.get("book_recommendation_session");
 
-    if (!context || !context.parameters.answers) {
+    if (!context || !context.parameters.answers || Object.keys(context.parameters.answers).length === 0) {
         agent.add("I don't have enough information. Can you tell me more?");
         return;
     }
 
     let answers = context.parameters.answers;
+    console.log("📌 Final Answers:", answers);
 
-    // 🎯 生成 OpenAI 提问
+    // 生成 OpenAI 提问
     let prompt = `Recommend a book based on these preferences:
     Genre: ${answers.genre || "Any"}
     Mood: ${answers.mood || "Any"}
